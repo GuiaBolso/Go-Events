@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/gbprojectbr/events/keys"
+	"github.com/GuiaBolso/Go-Events/keys"
 	"github.com/rs/xlog"
 )
 

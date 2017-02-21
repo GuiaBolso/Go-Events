@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"sort"
 
+	"github.com/GuiaBolso/Go-Events/keys"
 	"github.com/alecthomas/jsonschema"
-	"github.com/gbprojectbr/events/keys"
 	"github.com/rs/xlog"
 )
 
