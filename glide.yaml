@@ -1,0 +1,8 @@
+package: github.com/gbprojectbr/events
+import:
+- package: github.com/alecthomas/jsonschema
+- package: github.com/rs/xlog
+- package: github.com/satori/go.uuid
+  version: v1.1.0
+- package: github.com/newrelic/go-agent
+  version: v1.7.0
