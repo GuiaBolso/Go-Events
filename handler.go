@@ -37,7 +37,7 @@ func (h HandlerFunc) Serve(ctx context.Context, event Event) (Event, error) {
 // Mux Events mux
 type Mux struct {
 	events map[eventKey]Handler
-	tracer Tracker
+	tracer HTTPTracker
 }
 
 type eventKey struct {
@@ -46,7 +46,7 @@ type eventKey struct {
 }
 
 // NewMux returns a new events Mux
-func NewMux(tracer Tracker) *Mux {
+func NewMux(tracer HTTPTracker) *Mux {
 	return &Mux{
 		events: map[eventKey]Handler{},
 		tracer: tracer,
@@ -80,6 +80,7 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Error("Invalid event request", xlog.F{
 			keys.Error: err,
 		})
+
 		json.NewEncoder(w).Encode(
 			NewError(
 				"",
@@ -98,6 +99,7 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			keys.EventName: event.Name,
 			keys.FlowID:    event.FlowID,
 		})
+
 		json.NewEncoder(w).Encode(
 			NewError(
 				event.FlowID,
@@ -106,19 +108,9 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if txn := GetNewRelicTransaction(ctx); txn != nil {
-		txn.End()
-	}
-
-	app := GetNewRelicApplication(ctx)
-
-	if app != nil {
-		txn := app.StartTransaction(event.Name, w, r)
-		defer txn.End()
-		ctx = ContextWithNewRelicTransaction(ctx, txn)
-	}
-
+	ctx = m.tracer.Start(ctx, event, w, r)
 	response, err := handler.Serve(ctx, event)
+	ctx = m.tracer.End(ctx, event, err)
 
 	if err != nil {
 		log.Error("Event Returned an error", xlog.F{
@@ -126,6 +118,7 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			keys.FlowID:    event.FlowID,
 			keys.Error:     err,
 		})
+
 		json.NewEncoder(w).Encode(
 			NewError(
 				event.FlowID,

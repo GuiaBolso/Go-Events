@@ -1,22 +1,10 @@
-hash: 2a355f5b313730487123ba31ab322bfe3fa56388269a9836cb0acd1a930e5346
-updated: 2017-02-21T11:43:25.269307667-03:00
+hash: bdfb73f8ee037685af72fb8c30e2dd7aa42ed64f961ec3be1f852fec01cb1908
+updated: 2017-03-17T15:20:23.837260753-03:00
 imports:
 - name: github.com/alecthomas/jsonschema
   version: e69ac1a5ef1654ff1391a40fcfaa8ed6cac47188
-- name: github.com/newrelic/go-agent
-  version: 7c6c920d222b18632f03b12c3b594df816eab6d0
-- name: github.com/rs/xhandler
-  version: ed27b6fd65218132ee50cd95f38474a3d8a2cd12
-- name: github.com/rs/xid
-  version: 057f3c928c207d1e7e318929eeac93bb46e319e3
 - name: github.com/rs/xlog
   version: 65f56f4e59a609f0ab40ebc3251b19402668470a
-  subpackages:
-  - internal/term
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
-- name: golang.org/x/net
-  version: cbed01e851ceabac8eab72f5e0f1086ecbc60338
-  subpackages:
-  - context
 testImports: []
