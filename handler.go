@@ -46,10 +46,18 @@ type eventKey struct {
 }
 
 // NewMux returns a new events Mux
-func NewMux(tracer HTTPTracker) *Mux {
+func NewMuxWithTracker(tracer HTTPTracker) *Mux {
 	return &Mux{
 		events: map[eventKey]Handler{},
 		tracer: tracer,
+	}
+}
+
+// NewMuxNoOpTracker returns a new events Mux
+func NewMux() *Mux {
+	return &Mux{
+		events: map[eventKey]Handler{},
+		tracer: NewNoOpTracker(),
 	}
 }
 

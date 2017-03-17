@@ -32,7 +32,7 @@ func mockEventError(_ context.Context, event Event) (Event, error) {
 }
 
 func Test_NewMux(t *testing.T) {
-	mux := NewMux(NewNoOpTracker())
+	mux := NewMux()
 
 	if mux.events == nil {
 		t.Error("Mux does not have an events map")
@@ -40,7 +40,7 @@ func Test_NewMux(t *testing.T) {
 }
 
 func Test_Add(t *testing.T) {
-	mux := NewMux(NewNoOpTracker())
+	mux := NewMux()
 
 	mux.Add("mock", 1, HandlerFunc(mockHandlerFunc))
 
@@ -50,7 +50,7 @@ func Test_Add(t *testing.T) {
 }
 
 func Test_get(t *testing.T) {
-	mux := NewMux(NewNoOpTracker())
+	mux := NewMux()
 	key := eventKey{"mock", 1}
 
 	mux.Add(key.Name, key.Version, HandlerFunc(mockHandlerFunc))
@@ -66,7 +66,7 @@ func Test_ServerHTTP_invalid_Request(t *testing.T) {
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/events/", strings.NewReader("INVALID [}"))
 
-	mux := NewMux(NewNoOpTracker())
+	mux := NewMux()
 	mux.ServeHTTP(w, r)
 
 	body := w.Body.String()
@@ -84,7 +84,7 @@ func Test_ServerHTTP_Event_not_found(t *testing.T) {
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/events/", strings.NewReader(mockEvent))
 
-	mux := NewMux(NewNoOpTracker())
+	mux := NewMux()
 
 	mux.Add("some event", 1, HandlerFunc(mockHandlerFunc))
 	mux.ServeHTTP(w, r)
@@ -104,7 +104,7 @@ func Test_ServerHTTP_event_handler_error(t *testing.T) {
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/events/", strings.NewReader(mockEvent))
 
-	mux := NewMux(NewNoOpTracker())
+	mux := NewMux()
 
 	mux.Add("some event", 42, HandlerFunc(mockEventError))
 	mux.ServeHTTP(w, r)
@@ -134,7 +134,7 @@ func Test_ServerHTTP(t *testing.T) {
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/events/", strings.NewReader(mockEvent))
 
-	mux := NewMux(NewNoOpTracker())
+	mux := NewMux()
 
 	mux.Add("some event", 42, HandlerFunc(mockHandlerFunc))
 	mux.ServeHTTP(w, r)
@@ -161,7 +161,7 @@ func Test_ServeDoc(t *testing.T) {
 
 	ev := &mockEventStruct{}
 
-	mux := NewMux(NewNoOpTracker())
+	mux := NewMux()
 
 	mux.Add("TestEvent", 42, ev)
 	mux.Add("ZTestEvent", 1, ev)
