@@ -11,7 +11,7 @@ import (
 )
 
 func Test_Batch(t *testing.T) {
-	mux := NewMux()
+	mux := NewMux(NewNoOpTracker())
 	mockEvents := []Event{}
 
 	for i := 0; i < 4; i++ {
@@ -86,7 +86,7 @@ func Test_Batch_input_error(t *testing.T) {
         }`)),
 	}
 
-	h := Batch(NewMux())
+	h := Batch(NewMux(NewNoOpTracker()))
 
 	response, err := h(context.Background(), event)
 

@@ -37,6 +37,7 @@ func (h HandlerFunc) Serve(ctx context.Context, event Event) (Event, error) {
 // Mux Events mux
 type Mux struct {
 	events map[eventKey]Handler
+	tracer Tracker
 }
 
 type eventKey struct {
@@ -45,9 +46,10 @@ type eventKey struct {
 }
 
 // NewMux returns a new events Mux
-func NewMux() *Mux {
+func NewMux(tracer Tracker) *Mux {
 	return &Mux{
 		events: map[eventKey]Handler{},
+		tracer: tracer,
 	}
 }
 
