@@ -3,7 +3,7 @@ Events
 An events protocol designed to be a standard communication between applications.
 It is meant to be used synchronously (JSON over HTTP, REST) or asynchronously (WebSocket, Socket.IO)
 
-This is a production-ready library, however we still working on the documentation and it is coupled with [Newrelic agent](https://github.com/newrelic/go-agent) and [xlog](https://github.com/rs/xlog)
+This is a production-ready library, however we still working on the documentation and it is coupled [xlog](https://github.com/rs/xlog)
 
 
 Example:
@@ -112,3 +112,8 @@ $ $GOPATH/bin/goconvey
 ```
 
 Access http://localhost:8080
+
+Changelog
+=========
+
+* 17/03/2015 - Implementing HTTPTracker and removing dependency with NewRelic
