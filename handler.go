@@ -89,6 +89,8 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			keys.Error: err,
 		})
 
+		ctx = m.tracer.NoticeError(ctx, err)
+
 		json.NewEncoder(w).Encode(
 			NewError(
 				"",
@@ -107,6 +109,8 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			keys.EventName: event.Name,
 			keys.FlowID:    event.FlowID,
 		})
+
+		ctx = m.tracer.NoticeEventError(ctx, event, err)
 
 		json.NewEncoder(w).Encode(
 			NewError(
@@ -135,7 +139,15 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(response)
+	err = json.NewEncoder(w).Encode(response)
+
+	if err != nil {
+		m.tracer.NoticeEventError(ctx, event, err)
+		log.Error("Encoding response", xlog.F{
+			keys.Error:  err,
+			keys.FlowID: event.FlowID,
+		})
+	}
 }
 
 type doc struct {
