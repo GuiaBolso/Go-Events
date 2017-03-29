@@ -1,10 +1,8 @@
-hash: bdfb73f8ee037685af72fb8c30e2dd7aa42ed64f961ec3be1f852fec01cb1908
-updated: 2017-03-17T15:20:23.837260753-03:00
+hash: 3a07bf20bb9ef47332bdc0e54e4fffafe0ecbff6efd936401eaa7be9a4860256
+updated: 2017-03-29T09:27:50.474993064-03:00
 imports:
 - name: github.com/alecthomas/jsonschema
   version: e69ac1a5ef1654ff1391a40fcfaa8ed6cac47188
-- name: github.com/rs/xlog
-  version: 65f56f4e59a609f0ab40ebc3251b19402668470a
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
 testImports: []

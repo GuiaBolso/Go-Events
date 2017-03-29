@@ -7,9 +7,7 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/GuiaBolso/Go-Events/keys"
 	"github.com/alecthomas/jsonschema"
-	"github.com/rs/xlog"
 )
 
 // Handler Interface for event handler
@@ -75,9 +73,7 @@ func (m *Mux) get(name string, version int) (Handler, bool) {
 
 func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 
-	log := xlog.FromRequest(r)
 	ctx := r.Context()
 
 	event := Event{}
@@ -85,10 +81,6 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&event)
 
 	if err != nil {
-		log.Error("Invalid event request", xlog.F{
-			keys.Error: err,
-		})
-
 		ctx = m.tracer.NoticeError(ctx, err)
 
 		json.NewEncoder(w).Encode(
@@ -99,17 +91,9 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.SetField(keys.FlowID, event.FlowID)
-	log.SetField(keys.EventID, event.ID)
-
 	handler, ok := m.get(event.Name, event.Version)
 
 	if !ok {
-		log.Error("Event not Found", xlog.F{
-			keys.EventName: event.Name,
-			keys.FlowID:    event.FlowID,
-		})
-
 		ctx = m.tracer.NoticeEventError(ctx, event, err)
 
 		json.NewEncoder(w).Encode(
@@ -124,29 +108,13 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	response, err := handler.Serve(ctx, event)
 	ctx = m.tracer.End(ctx, event, err)
 
-	if err != nil {
-		log.Error("Event Returned an error", xlog.F{
-			keys.EventName: event.Name,
-			keys.FlowID:    event.FlowID,
-			keys.Error:     err,
-		})
-
-		json.NewEncoder(w).Encode(
-			NewError(
-				event.FlowID,
-				err.Error(),
-			))
-		return
-	}
-
 	err = json.NewEncoder(w).Encode(response)
 
 	if err != nil {
 		m.tracer.NoticeEventError(ctx, event, err)
-		log.Error("Encoding response", xlog.F{
-			keys.Error:  err,
-			keys.FlowID: event.FlowID,
-		})
+
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
 	}
 }
 

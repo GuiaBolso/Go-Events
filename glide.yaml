@@ -1,6 +1,5 @@
 package: github.com/GuiaBolso/Go-Events
 import:
 - package: github.com/alecthomas/jsonschema
-- package: github.com/rs/xlog
 - package: github.com/satori/go.uuid
   version: v1.1.0
