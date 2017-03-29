@@ -31,6 +31,16 @@ func mockEventError(_ context.Context, event Event) (Event, error) {
 	}, errors.New("some error")
 }
 
+func mockHandlerFuncInvalidEvent(_ context.Context, event Event) (Event, error) {
+	return Event{
+		FlowID:  event.FlowID,
+		Name:    event.Name + ":response",
+		ID:      RandomID(),
+		Version: 1,
+		Payload: []byte("INVALID ["),
+	}, nil
+}
+
 func Test_NewMux(t *testing.T) {
 	mux := NewMux()
 
@@ -66,7 +76,11 @@ func Test_ServerHTTP_invalid_Request(t *testing.T) {
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/events/", strings.NewReader("INVALID [}"))
 
-	mux := NewMux()
+	mockTracker := &MockTracker{
+		NoticeErrorFn: func(ctx context.Context, err error) context.Context { return ctx },
+	}
+
+	mux := NewMuxWithTracker(mockTracker)
 	mux.ServeHTTP(w, r)
 
 	body := w.Body.String()
@@ -78,13 +92,21 @@ func Test_ServerHTTP_invalid_Request(t *testing.T) {
 	if len(body) == 0 {
 		t.Error("Body cannot be empty")
 	}
+
+	if mockTracker.NoticeErrorCount != 1 {
+		t.Error("NoticeError must be called once")
+	}
 }
 
 func Test_ServerHTTP_Event_not_found(t *testing.T) {
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/events/", strings.NewReader(mockEvent))
 
-	mux := NewMux()
+	mockTracker := &MockTracker{
+		NoticeEventErrorFn: func(ctx context.Context, event Event, err error) context.Context { return ctx },
+	}
+
+	mux := NewMuxWithTracker(mockTracker)
 
 	mux.Add("some event", 1, HandlerFunc(mockHandlerFunc))
 	mux.ServeHTTP(w, r)
@@ -97,6 +119,10 @@ func Test_ServerHTTP_Event_not_found(t *testing.T) {
 
 	if len(body) == 0 {
 		t.Error("Body cannot be empty")
+	}
+
+	if mockTracker.NoticeEventErrorCount != 1 {
+		t.Error("NoticeEventError must be called once")
 	}
 }
 
@@ -122,10 +148,11 @@ func Test_ServerHTTP_event_handler_error(t *testing.T) {
 		t.Error("Expecting the same flowID as the request event")
 	}
 
-	if response.Name != "error" {
+	expectedName := "some event:error"
+	if response.Name != expectedName {
 		t.Errorf(`Got response.Name = %s, expecting: %s\n\nResponse: %s`,
 			response.Name,
-			"error",
+			expectedName,
 			body)
 	}
 }
@@ -152,6 +179,37 @@ func Test_ServerHTTP(t *testing.T) {
 
 	if response.Name != "some event:response" {
 		t.Error("Expecting a different response")
+	}
+}
+
+func Test_ServerHTTP_enconding_response_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("POST", "/events/", strings.NewReader(mockEvent))
+
+	mockTracker := &MockTracker{
+		StartFn:            func(ctx context.Context, _ Event, _ http.ResponseWriter, _ *http.Request) context.Context { return ctx },
+		NoticeEventErrorFn: func(ctx context.Context, _ Event, _ error) context.Context { return ctx },
+		EndFn:              func(ctx context.Context, _ Event, _ error) context.Context { return ctx },
+	}
+	mux := NewMuxWithTracker(mockTracker)
+
+	mux.Add("some event", 42, HandlerFunc(mockHandlerFuncInvalidEvent))
+	mux.ServeHTTP(w, r)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("w.Code = %d, expecting %d", w.Code, http.StatusInternalServerError)
+	}
+
+	if mockTracker.NoticeEventErrorCount != 1 {
+		t.Error("NoticeEventError must be called only once")
+	}
+
+	if mockTracker.EndCount != 1 {
+		t.Error("End must be called only once")
+	}
+
+	if mockTracker.StartCount != 1 {
+		t.Error("StartCount must be called only once")
 	}
 }
 

@@ -4,9 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
-	"github.com/GuiaBolso/Go-Events/keys"
-	"github.com/rs/xlog"
 )
 
 // Event implementation
@@ -39,6 +36,7 @@ func NewError(flowID, message string) Event {
 	}
 }
 
+// NewErrorWithMetadata - Returns an error event with metadata
 func NewErrorWithMetadata(flowID, message string, metadata interface{}) Event {
 	payload, _ := json.Marshal(errorPayload{
 		Message: message,
@@ -72,7 +70,6 @@ func NewResponse(request Event, payload interface{}) (Event, error) {
 // Batch is an event that executes batches of events
 func Batch(mux *Mux) HandlerFunc {
 	return func(ctx context.Context, event Event) (Event, error) {
-		log := xlog.FromContext(ctx)
 		payload := struct {
 			Parallel bool    `json:"parallel"`
 			Events   []Event `json:"events"`
@@ -84,29 +81,17 @@ func Batch(mux *Mux) HandlerFunc {
 			return NewError(event.FlowID, err.Error()), err
 		}
 
-		for i, ev := range payload.Events {
-			newLog := xlog.Copy(log)
-
-			newLog.SetField("Step", i)
-			newLog.SetField("Parallel", payload.Parallel)
-			newLog.SetField(keys.FlowID, ev.FlowID)
-			newLog.SetField(keys.EventName, ev.Name)
-			newLog.SetField("Parallel-ID", event.FlowID)
-
-			newLog.Info("Batch Event")
-
+		for _, ev := range payload.Events {
 			if h, ok := mux.get(ev.Name, ev.Version); ok {
 				resp, err := h.Serve(ctx, ev)
 
 				responses = append(responses, resp)
 
 				if err != nil {
-					newLog.Error("Batch Event Error", xlog.F{
-						keys.Error: err,
-					})
+					ctx = mux.tracer.NoticeEventError(ctx, ev, err)
 				}
+
 			} else {
-				newLog.Info("Event not found")
 				responses = append(responses, NewError(
 					ev.FlowID,
 					fmt.Sprintf(`Event "%s" not found`, ev.Name),
